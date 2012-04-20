@@ -135,17 +135,6 @@ define(function (require, exports, module) {
             $("#btn-open-project").click(function () {
                 CommandManager.execute(Commands.FILE_OPEN_FOLDER);
             });
-
-
-            // Handle toggling top level disclosure arrows of file list area
-            $("#open-files-header").click(function () {
-                $("#open-files-disclosure-arrow").toggleClass("disclosure-arrow-closed");
-                $("#open-files-container").toggle();
-            });
-            $("#project-files-header").click(function () {
-                $("#project-files-disclosure-arrow").toggleClass("disclosure-arrow-closed");
-                $("#project-files-container").toggle();
-            });
         }
         
         
@@ -183,8 +172,6 @@ define(function (require, exports, module) {
                     {"Shift-F3": Commands.EDIT_FIND_PREVIOUS, "platform": "win"},
                     {"Ctrl-Alt-F": Commands.EDIT_REPLACE, "platform": "mac"},
                     {"Ctrl-H": Commands.EDIT_REPLACE, "platform": "win"},
-                    {"Ctrl-Tab": Commands.EDIT_INDENT},
-                    {"Ctrl-Shift-Tab": Commands.EDIT_UNINDENT},
 
                     // VIEW
                     {"Ctrl-Shift-H": Commands.VIEW_HIDE_SIDEBAR},
