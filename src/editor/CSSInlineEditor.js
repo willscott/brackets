@@ -14,7 +14,9 @@ define(function (require, exports, module) {
         HTMLUtils           = require("language/HTMLUtils"),
         CSSUtils            = require("language/CSSUtils"),
         EditorManager       = require("editor/EditorManager"),
-        InlineTextEditor    = require("editor/InlineTextEditor").InlineTextEditor;
+        InlineTextEditor    = require("editor/InlineTextEditor").InlineTextEditor,
+        Commands            = require("command/Commands"),
+        CommandManager      = require("command/CommandManager");
 
     /**
      * Remove trailing "px" from a style size value.
@@ -96,6 +98,8 @@ define(function (require, exports, module) {
         this.$relatedContainer = $(document.createElement("div")).addClass("relatedContainer");
         this._relatedContainerInserted = false;
         this._relatedContainerInsertedHandler = this._relatedContainerInsertedHandler.bind(this);
+        
+        // FIXME (jasonsj): deprecated event http://www.w3.org/TR/DOM-Level-3-Events/
         this.$relatedContainer.on("DOMNodeInserted", this._relatedContainerInsertedHandler);
         
         // List "selection" highlight
@@ -190,15 +194,9 @@ define(function (require, exports, module) {
         this.editors = [];
         this.$editorsDiv.children().remove();
 
-        // Keyboard shortcuts
-        var extraKeys = {
-            "Alt-Up" : $.proxy(this.previousRule, this),
-            "Alt-Down" : $.proxy(this.nextRule, this)
-        };
-
         // Add new editor
         var rule = this.getSelectedRule();
-        this.createInlineEditorFromText(rule.textRange.document, rule.textRange.startLine, rule.textRange.endLine, this.$editorsDiv.get(0), extraKeys);
+        this.createInlineEditorFromText(rule.textRange.document, rule.textRange.startLine, rule.textRange.endLine, this.$editorsDiv.get(0));
         this.editors[0].focus();
 
         // Changes in size to the inline editor should update the relatedContainer
@@ -525,9 +523,49 @@ define(function (require, exports, module) {
         return result.promise();
     }
 
+    /**
+     * Returns the currently focused CSSInlineEditor.
+     * @returns {CSSInlineEditor}
+     */
+    function _getFocusedCSSInlineEditor() {
+        
+        var focusedCSSInlineEditor = null,
+            result = EditorManager.getFocusedInlineWidget();
+        
+        if (result) {
+            var focusedWidget = result.widget;
+            if (focusedWidget && focusedWidget instanceof CSSInlineEditor) {
+                focusedCSSInlineEditor = focusedWidget;
+            }
+        }
+        
+        return focusedCSSInlineEditor;
+    }
+
+    /**
+     * Previous Rule command handler
+     */
+    function _previousRule() {
+        var focusedCSSInlineEditor = _getFocusedCSSInlineEditor();
+        if (focusedCSSInlineEditor) {
+            focusedCSSInlineEditor.previousRule();
+        }
+    }
+    
+    /**
+     * Next Rule command handler
+     */
+    function _nextRule() {
+        var focusedCSSInlineEditor = _getFocusedCSSInlineEditor();
+        if (focusedCSSInlineEditor) {
+            focusedCSSInlineEditor.nextRule();
+        }
+    }
 
     EditorManager.registerInlineEditProvider(htmlToCSSProvider);
     
+    CommandManager.register(Commands.PREVIOUS_CSS_RULE, _previousRule);
+    CommandManager.register(Commands.NEXT_CSS_RULE, _nextRule);
 
     exports.CSSInlineEditor = CSSInlineEditor;
 
