@@ -1,3 +1,25 @@
+
+// Copyright (c) 2012 Adobe Systems Incorporated. All rights reserved.
+//  
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the "Software"), 
+// to deal in the Software without restriction, including without limitation 
+// the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+// and/or sell copies of the Software, and to permit persons to whom the 
+// Software is furnished to do so, subject to the following conditions:
+//  
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//  
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+// DEALINGS IN THE SOFTWARE.
+
+
 /* Brackets patterns (and overrides and re-definitions of Bootstrap patterns)
  *
  * This file should contain all _reusable_ UI elements / LESS definitions
@@ -39,7 +61,7 @@
 /* Simple toolbar layout (project panel, find in files, etc.)
    We don't set this directly on .toolbar because it'd be a pain to override all the pieces
    if other code (e.g. #main-toolbar) wants to do a different layout */
-.simpleToolbarLayout.toolbar {
+.simple-toolbar-layout.toolbar {
     .hbox;
     .box-align(center);
     .title-wrapper {
@@ -124,12 +146,21 @@
     
     .buttons {
         margin: @toolbar-top-gap-px 0 0 4px;
+        
+        .experimental-label {
+            color: #a0a0a0;
+            font-size: 15px;
+            line-height: 20px;  // prevent jumping when 20px-tall JSLint star is added/removed
+            font-weight: normal;
+            font-style: italic;
+            padding-right: 22px;
+        }
     }
 }
 
 
 /* Menu-related styles */
-.toolbar .nav {
+.toolbar .nav, .context-menu {
     @menubar-top-padding: 8px;
     @menubar-bottom-padding: 6px;
     @menubar-h-padding: 9px;
@@ -195,13 +226,21 @@
                     background: @item-highlight-color;
                 }
 
+                &.disabled {
+                    color: @bc-gray;
+
+                    &:hover {
+                        background: @bc-white;
+                    }
+                }
+
                 /* hidden checkmark for all list item content ensures consistent left spacing */
                 &::before {
                     content: "✓\00a0"; /* non-breaking space */
                     visibility: hidden;
                 }
                 /* toggle checkmark visibility */
-                &.selected::before {
+                &.checked::before {
                     visibility: visible;
                 }
             }
@@ -217,6 +256,26 @@
     .menu-shortcut {
         margin-left: 15px;
     }
+}
+
+/* Context menu styles */
+
+.context-menu {
+    position: absolute;
+    z-index: @z-index-brackets-context-menu-base;
+    list-style-type: none;
+
+    .dropdown-menu {
+        .border-radius(3px);
+    }
+    
+    .menu-shortcut {
+        float: right;
+    }
+}
+
+#context-menu-bar {
+    margin: 0;
 }
 
 /* Dialog-related styles */
@@ -239,7 +298,7 @@
 }
 
 .dialog-message {
-    font-size: 17px;
+    font-size: 16px;
     line-height: 26px;
     margin-bottom: 20px;
     font-weight: @font-weight-light;
@@ -257,16 +316,57 @@
 }
 
 .btn {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: @font-weight-semibold;
     color: #454545;
-
+    
+    // On hover, gradient slides away to reveal a solid-color bg. Want same bg color in non-hover
+    // too so we don't see the color cross-fading during the gradient slide animation
+    background-color: #fff;
     &:hover {
         background-position: 0 15px;
-        background-color: #fff;
     }
 
     &.primary {
         background-color: @blue;
+    }
+}
+
+/* About dialog */
+.about-dialog .modal-body {
+    // Simple two-column layout: image on left, text taking up remaining space on right
+    position: relative;
+    .about-icon {
+        position: absolute;
+        left: 10px;  // relative to border of modal-body (bounds outside padding)
+        top:  11px;
+    }
+    .about-text {
+        // Icon is 120px, so we need at least that much left padding/margin to avoid overlap
+        margin: 0 10px 0 123px;
+        
+        #about-build-number {
+            color: #b0b0b0;
+        }
+    }
+    
+    h2 {
+        font-weight: normal;
+        font-size: 25px;
+        margin-bottom: -8px;
+        margin-top: 3px;
+    }
+    .dialog-message {
+        font-size: 14px;
+        line-height: 17px;
+        
+        // Enable text selection, since URLs aren't clickable
+        cursor: auto;
+        -webkit-user-select: text;
+        -khtml-user-select: text;
+        -moz-user-select: text;
+        -ms-user-select: text;
+        -o-user-select: text;
+        user-select: text;
     }
 }

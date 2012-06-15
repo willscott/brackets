@@ -1,9 +1,29 @@
 /*
- * Copyright 2011 Adobe Systems Incorporated. All Rights Reserved.
+ * Copyright (c) 2012 Adobe Systems Incorporated. All rights reserved.
+ *  
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"), 
+ * to deal in the Software without restriction, including without limitation 
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+ * and/or sell copies of the Software, and to permit persons to whom the 
+ * Software is furnished to do so, subject to the following conditions:
+ *  
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *  
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
+ * 
  */
 
-/*jslint vars: true, plusplus: true, devel: true, browser: true, nomen: true, indent: 4, maxerr: 50 */
-/*global define: false, $: false, CodeMirror: false */
+
+/*jslint vars: true, plusplus: true, devel: true, nomen: true, indent: 4, maxerr: 50 */
+/*global define, $, CodeMirror, window */
 
 /**
  * EditorManager owns the UI for the editor area. This essentially mirrors the 'current document'
@@ -14,7 +34,8 @@
  * not a pure headless model. Each Document encapsulates an editor instance, and thus EditorManager
  * must have some knowledge about Document's internal state (we access its _editor property).
  *
- * This module does not dispatch any events.
+ * This module dispatches the following events:
+ *    - focusedEditorChange -- When the focused editor (full or inline) changes and size/visibility are complete.
  */
 define(function (require, exports, module) {
     'use strict';
@@ -24,9 +45,11 @@ define(function (require, exports, module) {
         Commands            = require("command/Commands"),
         CommandManager      = require("command/CommandManager"),
         DocumentManager     = require("document/DocumentManager"),
+        PerfUtils           = require("utils/PerfUtils"),
         Editor              = require("editor/Editor").Editor,
         InlineTextEditor    = require("editor/InlineTextEditor").InlineTextEditor,
         EditorUtils         = require("editor/EditorUtils"),
+        ViewUtils           = require("utils/ViewUtils"),
         Strings             = require("strings");
     
     /** @type {jQueryObject} DOM node that contains all editors (visible and hidden alike) */
@@ -111,6 +134,8 @@ define(function (require, exports, module) {
      *      is created or rejected when no inline editors are available.
      */
     function _openInlineWidget(editor) {
+        PerfUtils.markStart(PerfUtils.OPEN_INLINE_EDITOR);
+        
         // Run through inline-editor providers until one responds
         var pos = editor.getCursorPos(),
             inlinePromise,
@@ -126,11 +151,16 @@ define(function (require, exports, module) {
         if (inlinePromise) {
             inlinePromise.done(function (inlineWidget) {
                 editor.addInlineWidget(pos, inlineWidget);
+                PerfUtils.addMeasurement(PerfUtils.OPEN_INLINE_EDITOR);
                 result.resolve();
             }).fail(function () {
+                // terminate timer that was started above
+                PerfUtils.finalizeMeasurement(PerfUtils.OPEN_INLINE_EDITOR);
                 result.reject();
             });
         } else {
+            // terminate timer that was started above
+            PerfUtils.finalizeMeasurement(PerfUtils.OPEN_INLINE_EDITOR);
             result.reject();
         }
         
@@ -202,7 +232,7 @@ define(function (require, exports, module) {
      * Creates a new "full-size" (not inline) Editor for the given Document, and sets it as the
      * Document's master backing editor. The editor is not yet visible; to show it, use
      * DocumentManager.setCurrentDocument().
-     * Semi-private: should not be called outside this module other than by Editor.
+     * Semi-private: should only be called within this module or by Document.
      * @param {!Document} document  Document whose main/full Editor to create
      */
     function _createFullEditorForDocument(document) {
@@ -234,6 +264,8 @@ define(function (require, exports, module) {
         // Create the Editor
         var inlineEditor = _createEditorForDocument(doc, false, inlineContent, closeThisInline, range, additionalKeys);
         
+        $(exports).triggerHandler("focusedEditorChange", inlineEditor);
+        
         return { content: inlineContent, editor: inlineEditor };
     }
     
@@ -247,6 +279,8 @@ define(function (require, exports, module) {
      * DocumentManager's standpoint. However, destroying the full-size editor does remove the backing
      * "master" editor from the Document, rendering it immutable until either inline-editor edits or
      * currentDocument change triggers _createFullEditorForDocument() full-size editor again.
+     *
+     * In certain edge cases, this is called directly by DocumentManager; see _gcDocuments() for details.
      *
      * @param {!Document} document Document whose "master" editor we may destroy
      */
@@ -318,6 +352,8 @@ define(function (require, exports, module) {
         
         // Window may have been resized since last time editor was visible, so kick it now
         resizeEditor();
+        
+        $(exports).triggerHandler("focusedEditorChange", _currentEditor);
     }
 
     /**
@@ -328,7 +364,7 @@ define(function (require, exports, module) {
     function _showEditor(document) {
         // Hide whatever was visible before
         if (!_currentEditor) {
-            $("#notEditor").css("display", "none");
+            $("#not-editor").css("display", "none");
         } else {
             _currentEditor.setVisible(false);
             _destroyEditorIfUnneeded(_currentEditorsDocument);
@@ -353,21 +389,35 @@ define(function (require, exports, module) {
             _currentEditorsDocument = null;
             _currentEditor = null;
             
-            $("#notEditor").css("display", "");
+            $("#not-editor").css("display", "");
+        
+            $(exports).triggerHandler("focusedEditorChange", _currentEditor);
         }
     }
 
     /** Handles changes to DocumentManager.getCurrentDocument() */
     function _onCurrentDocumentChange() {
-        var doc = DocumentManager.getCurrentDocument();
+        var doc = DocumentManager.getCurrentDocument(),
+            container = _editorHolder.get(0);
+        
+        var perfTimerName = PerfUtils.markStart("EditorManager._onCurrentDocumentChange():\t" + (!doc || doc.file.fullPath));
+
+        // Remove scroller-shadow from the current editor
+        if (_currentEditor) {
+            ViewUtils.removeScrollerShadow(container, _currentEditor);
+        }
         
         // Update the UI to show the right editor (or nothing), and also dispose old editor if no
         // longer needed.
         if (doc) {
             _showEditor(doc);
+            ViewUtils.addScrollerShadow(container, _currentEditor);
         } else {
             _showNoEditor();
         }
+
+
+        PerfUtils.addMeasurement(perfTimerName);
     }
     
     /** Handles removals from DocumentManager's working set list */
@@ -474,7 +524,7 @@ define(function (require, exports, module) {
         }
     }
 
-    CommandManager.register(Commands.SHOW_INLINE_EDITOR, _showInlineEditor);
+    CommandManager.register(Strings.CMD_SHOW_INLINE_EDITOR,     Commands.SHOW_INLINE_EDITOR, _showInlineEditor);
     
     // Initialize: register listeners
     $(DocumentManager).on("currentDocumentChange", _onCurrentDocumentChange);
@@ -491,6 +541,7 @@ define(function (require, exports, module) {
     exports.getCurrentFullEditor = getCurrentFullEditor;
     exports.createInlineEditorForDocument = createInlineEditorForDocument;
     exports._createFullEditorForDocument = _createFullEditorForDocument;
+    exports._destroyEditorIfUnneeded = _destroyEditorIfUnneeded;
     exports.focusEditor = focusEditor;
     exports.getFocusedEditor = getFocusedEditor;
     exports.getFocusedInlineWidget = getFocusedInlineWidget;

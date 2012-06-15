@@ -1,5 +1,29 @@
+/*
+ * Copyright (c) 2012 Adobe Systems Incorporated. All rights reserved.
+ *  
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"), 
+ * to deal in the Software without restriction, including without limitation 
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+ * and/or sell copies of the Software, and to permit persons to whom the 
+ * Software is furnished to do so, subject to the following conditions:
+ *  
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *  
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
+ * 
+ */
+
+
 /*jslint vars: true, plusplus: true, devel: true, browser: true, nomen: true, indent: 4, maxerr: 50, regexp: true */
-/*global define: false, $: false,  describe: false, it: false, expect: false, beforeEach: false, afterEach: false, waitsFor: false, waits: false, runs: false */
+/*global define, $, brackets, describe, it, expect, beforeEach, afterEach, waitsFor, waits, runs */
 define(function (require, exports, module) {
     'use strict';
     
@@ -34,6 +58,22 @@ define(function (require, exports, module) {
         path.push("src");
         return path.join("/");
     }
+    
+    
+    /**
+     * Utility for tests that wait on a Promise. Placed in the global namespace so it can be used
+     * similarly to the standards Jasmine waitsFor(). Unlike waitsFor(), must be called from INSIDE
+     * the runs() that generates the promise.
+     * @param {$.Promise} promise
+     * @param {string} operationName  Name used for timeout error message
+     */
+    window.waitsForDone = function (promise, operationName) {
+        expect(promise).toBeTruthy();
+        waitsFor(function () {
+            return promise.state() === "resolved";
+        }, "Timeout waiting for " + operationName, 1000);
+    };
+    
     
     /**
      * Returns a Document suitable for use with an Editor in isolation: i.e., a Document that will
@@ -83,10 +123,10 @@ define(function (require, exports, module) {
 
         // FIXME (issue #249): Need an event or something a little more reliable...
         waitsFor(
-            function () {
-                return testWindow.brackets && testWindow.brackets.test;
+            function isBracketsDoneLoading() {
+                return testWindow.brackets && testWindow.brackets.test && testWindow.brackets.test.doneLoading;
             },
-            5000
+            10000
         );
 
         runs(function () {
@@ -402,6 +442,26 @@ define(function (require, exports, module) {
         // TODO (jasonsj): refactor CMD+E as a Command instead of a CodeMirror key binding?
         return testWindow.brackets.test.EditorManager._openInlineWidget(editor);
     }
+    
+    /**
+     * @param {string} fullPath
+     * @return {$.Promise} Resolved when deletion complete, or rejected if an error occurs
+     */
+    function deleteFile(fullPath) {
+        var result = new $.Deferred();
+        brackets.fs.unlink(fullPath, function (err) {
+            if (err) {
+                result.reject(err);
+            } else {
+                result.resolve();
+            }
+        });
+        return result.promise();
+    }
+
+    function getTestWindow() {
+        return testWindow;
+    }
 
     exports.TEST_PREFERENCES_KEY    = TEST_PREFERENCES_KEY;
     
@@ -419,4 +479,6 @@ define(function (require, exports, module) {
     exports.saveFilesWithOffsets        = saveFilesWithOffsets;
     exports.saveFilesWithoutOffsets     = saveFilesWithoutOffsets;
     exports.saveFileWithoutOffsets      = saveFileWithoutOffsets;
+    exports.deleteFile                  = deleteFile;
+    exports.getTestWindow               = getTestWindow;
 });
