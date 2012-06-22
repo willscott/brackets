@@ -30,9 +30,8 @@
  * the file tree.
  *
  * This module dispatches these events:
- *    - initializeComplete -- When the ProjectManager initializes the first 
- *                            project at application start-up.
- *    - projectRootChanged -- when _projectRoot changes
+ *    - beforeProjectClose -- before _projectRoot changes
+ *    - projectOpen        -- after  _projectRoot changes
  *
  * These are jQuery events, so to listen for them you do something like this:
  *    $(ProjectManager).on("eventname", handler);
@@ -50,6 +49,7 @@ define(function (require, exports, module) {
         CommandManager      = require("command/CommandManager"),
         Commands            = require("command/Commands"),
         Dialogs             = require("widgets/Dialogs"),
+        Menus               = require("command/Menus"),
         StringUtils         = require("utils/StringUtils"),
         Strings             = require("strings"),
         FileViewController  = require("project/FileViewController"),
@@ -138,7 +138,7 @@ define(function (require, exports, module) {
             if (selectionChanged && !_suppressSelectionChange) {
                 $projectTreeList.triggerHandler("selectionChanged", reveal);
             }
-            
+
             // reposition the selection triangle
             $projectTreeContainer.triggerHandler("scroll");
             
@@ -380,6 +380,13 @@ define(function (require, exports, module) {
                 }
             )
             .bind(
+                "scroll.jstree",
+                function (e) {
+                    // close all dropdowns on scroll
+                    Menus.closeAll();
+                }
+            )
+            .bind(
                 "loaded.jstree open_node.jstree close_node.jstree",
                 function (event, data) {
                     if (event.type === "open_node") {
@@ -403,6 +410,24 @@ define(function (require, exports, module) {
                     }
                     
                     _savePreferences();
+                }
+            )
+            .bind(
+                "mousedown.jstree",
+                function (event) {
+                    // select tree node on right-click
+                    if (event.which === 3) {
+                        var treenode = $(event.target).closest("li");
+                        if (treenode) {
+                            var saveSuppressToggleOpen = suppressToggleOpen;
+                            
+                            // don't toggle open folders (just select)
+                            suppressToggleOpen = true;
+                            _projectTree.jstree("deselect_all");
+                            _projectTree.jstree("select_node", treenode, false);
+                            suppressToggleOpen = saveSuppressToggleOpen;
+                        }
+                    }
                 }
             );
 
@@ -580,13 +605,11 @@ define(function (require, exports, module) {
 
         var prefs = _prefs.getAllValues(),
             result = new $.Deferred(),
-            resultRenderTree,
-            isFirstProjectOpen = false;
+            resultRenderTree;
 
         if (rootPath === null || rootPath === undefined) {
             // Load the last known project into the tree
             rootPath = prefs.projectPath;
-            isFirstProjectOpen = true;
 
             _projectInitialLoad.previous = prefs.projectTreeState;
 
@@ -597,8 +620,6 @@ define(function (require, exports, module) {
             }
         }
         
-        var perfTimerName = PerfUtils.markStart("Load Project: " + rootPath);
-
         // Populate file tree as long as we aren't running in the browser
         if (!brackets.inBrowser) {
             // Point at a real folder structure on local disk
@@ -608,6 +629,8 @@ define(function (require, exports, module) {
                         || _projectRoot.fullPath !== rootEntry.fullPath;
 
                     // Success!
+                    var perfTimerName = PerfUtils.markStart("Load Project: " + rootPath);
+
                     _projectRoot = rootEntry;
 
                     // The tree will invoke our "data provider" function to populate the top-level items, then
@@ -616,17 +639,14 @@ define(function (require, exports, module) {
                     resultRenderTree = _renderTree(_treeDataProvider);
 
                     resultRenderTree.done(function () {
-                        if (isFirstProjectOpen) {
-                            $(exports).triggerHandler("initializeComplete", _projectRoot);
-                        }
-
                         if (projectRootChanged) {
-                            $(exports).triggerHandler("projectRootChanged", _projectRoot);
+                            $(exports).triggerHandler("projectOpen", _projectRoot);
                         }
                         
                         result.resolve();
                     });
                     resultRenderTree.fail(function () {
+                        PerfUtils.terminateMeasurement(perfTimerName);
                         result.reject();
                     });
                     resultRenderTree.always(function () {
@@ -674,6 +694,8 @@ define(function (require, exports, module) {
                     function (files) {
                         // If length == 0, user canceled the dialog; length should never be > 1
                         if (files.length > 0) {
+                            $(exports).triggerHandler("beforeProjectClose", _projectRoot);
+
                             // Actually close all the old files now that we know for sure we're proceeding
                             DocumentManager.closeAll();
                             

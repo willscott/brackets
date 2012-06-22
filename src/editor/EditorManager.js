@@ -101,13 +101,11 @@ define(function (require, exports, module) {
      * @param {!boolean} makeMasterEditor  If true, the Editor will set itself as the private "master"
      *          Editor for the Document. If false, the Editor will attach to the Document as a "slave."
      * @param {!jQueryObject} container  Container to add the editor to.
-     * @param {!function} onInlineGesture  Handler for Ctrl+E command (open/close inline, depending
-     *          on context)
      * @param {{startLine: number, endLine: number}=} range If specified, range of lines within the document
      *          to display in this editor. Inclusive.
      * @return {Editor} the newly created editor.
      */
-    function _createEditorForDocument(doc, makeMasterEditor, container, onInlineGesture, range, additionalKeys) {
+    function _createEditorForDocument(doc, makeMasterEditor, container, range, additionalKeys) {
         var mode = EditorUtils.getModeFromFileExtension(doc.file.fullPath);
         
         var extraKeys = {
@@ -134,7 +132,7 @@ define(function (require, exports, module) {
      *      is created or rejected when no inline editors are available.
      */
     function _openInlineWidget(editor) {
-        PerfUtils.markStart(PerfUtils.OPEN_INLINE_EDITOR);
+        PerfUtils.markStart(PerfUtils.INLINE_EDITOR_OPEN);
         
         // Run through inline-editor providers until one responds
         var pos = editor.getCursorPos(),
@@ -151,16 +149,16 @@ define(function (require, exports, module) {
         if (inlinePromise) {
             inlinePromise.done(function (inlineWidget) {
                 editor.addInlineWidget(pos, inlineWidget);
-                PerfUtils.addMeasurement(PerfUtils.OPEN_INLINE_EDITOR);
+                PerfUtils.addMeasurement(PerfUtils.INLINE_EDITOR_OPEN);
                 result.resolve();
             }).fail(function () {
                 // terminate timer that was started above
-                PerfUtils.finalizeMeasurement(PerfUtils.OPEN_INLINE_EDITOR);
+                PerfUtils.finalizeMeasurement(PerfUtils.INLINE_EDITOR_OPEN);
                 result.reject();
             });
         } else {
             // terminate timer that was started above
-            PerfUtils.finalizeMeasurement(PerfUtils.OPEN_INLINE_EDITOR);
+            PerfUtils.finalizeMeasurement(PerfUtils.INLINE_EDITOR_OPEN);
             result.reject();
         }
         
@@ -238,7 +236,7 @@ define(function (require, exports, module) {
     function _createFullEditorForDocument(document) {
         // Create editor; make it initially invisible
         var container = _editorHolder.get(0);
-        var editor = _createEditorForDocument(document, true, container, _openInlineWidget);
+        var editor = _createEditorForDocument(document, true, container);
         editor.setVisible(false);
     }
     
@@ -260,9 +258,9 @@ define(function (require, exports, module) {
      *
      * @return {{content:DOMElement, editor:Editor}}
      */
-    function createInlineEditorForDocument(doc, range, inlineContent, closeThisInline, additionalKeys) {
+    function createInlineEditorForDocument(doc, range, inlineContent, additionalKeys) {
         // Create the Editor
-        var inlineEditor = _createEditorForDocument(doc, false, inlineContent, closeThisInline, range, additionalKeys);
+        var inlineEditor = _createEditorForDocument(doc, false, inlineContent, range, additionalKeys);
         
         $(exports).triggerHandler("focusedEditorChange", inlineEditor);
         
@@ -503,28 +501,47 @@ define(function (require, exports, module) {
     }
  
     /**
-     * Show Inline Editor command handler
+     * Toggle Quick Edit command handler
+     * @return {!Promise} A promise resolved with true if an inline editor
+     *   is opened or false when closed. The promise is rejected if there
+     *   is no current editor or an inline editor is not created.
      */
-    function _showInlineEditor() {
+    function _toggleQuickEdit() {
+        var result = new $.Deferred();
+        
         if (_currentEditor) {
             var inlineWidget = null,
-                result = getFocusedInlineWidget();
+                focusedWidgetResult = getFocusedInlineWidget();
             
-            if (result) {
-                inlineWidget = result.widget;
+            if (focusedWidgetResult) {
+                inlineWidget = focusedWidgetResult.widget;
             }
             
             if (inlineWidget) {
                 // an inline widget's editor has focus, so close it
+                PerfUtils.markStart(PerfUtils.INLINE_EDITOR_CLOSE);
                 inlineWidget.close();
+                PerfUtils.addMeasurement(PerfUtils.INLINE_EDITOR_CLOSE);
+        
+                // return a resolved promise to CommandManager
+                result.resolve(false);
             } else {
                 // main editor has focus, so create an inline editor
-                _openInlineWidget(_currentEditor);
+                _openInlineWidget(_currentEditor).done(function () {
+                    result.resolve(true);
+                }).fail(function () {
+                    result.reject();
+                });
             }
+        } else {
+            // Can not open an inline editor without a host editor
+            result.reject();
         }
+        
+        return result.promise();
     }
 
-    CommandManager.register(Strings.CMD_SHOW_INLINE_EDITOR,     Commands.SHOW_INLINE_EDITOR, _showInlineEditor);
+    CommandManager.register(Strings.CMD_TOGGLE_QUICK_EDIT, Commands.TOGGLE_QUICK_EDIT, _toggleQuickEdit);
     
     // Initialize: register listeners
     $(DocumentManager).on("currentDocumentChange", _onCurrentDocumentChange);
