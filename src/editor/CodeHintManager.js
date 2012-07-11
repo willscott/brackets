@@ -238,7 +238,7 @@ define(function (require, exports, module) {
         // adjust positioning so menu is not clipped off bottom or right
         var bottomOverhang = posTop + 25 + $menuWindow.height() - $window.height();
         if (bottomOverhang > 0) {
-            posTop = Math.max(0, posTop - bottomOverhang);
+            posTop -= ($menuWindow.height() + 25);
         }
         // todo: should be shifted by line height
         posTop -= 15;   // shift top for hidden parent element
