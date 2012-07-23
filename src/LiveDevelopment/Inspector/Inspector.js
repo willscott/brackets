@@ -343,6 +343,14 @@ define(function Inspector(require, exports, module) {
         request.send(null);
     }
 
+    function mapUrl(url) {
+        return url.replace('file:///Users/jbrandt/development/jdiehl-internship/Prototypes/Examples/todo', 'http://192.168.1.104/~jbrandt/examples/todo');
+    }
+
+    function reverseMapUrl(url) {
+        return url.replace('http://192.168.1.104/~jbrandt/examples/todo', 'file:///Users/jbrandt/development/jdiehl-internship/Prototypes/Examples/todo');
+    }
+
     // Export public functions
     exports.trigger = trigger;
     exports.getAvailableSockets = getAvailableSockets;
@@ -353,4 +361,6 @@ define(function Inspector(require, exports, module) {
     exports.connectToURL = connectToURL;
     exports.connected = connected;
     exports.init = init;
+    exports.mapUrl = mapUrl;
+    exports.reverseMapUrl = reverseMapUrl;
 });

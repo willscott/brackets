@@ -43,7 +43,8 @@ define(function main(require, exports, module) {
         LiveDevelopment = require("LiveDevelopment/LiveDevelopment"),
         Inspector       = require("LiveDevelopment/Inspector/Inspector"),
         CommandManager  = require("command/CommandManager"),
-        Strings = require("strings");
+        Dialogs         = require("widgets/Dialogs"),
+        Strings         = require("strings");
 
     var config = {
         debug: true, // enable debug output and helpers
@@ -117,6 +118,22 @@ define(function main(require, exports, module) {
         }
     }
 
+    function _handleGoLiveUrlMapCommand() {
+        Dialogs.showModalDialog(
+            Dialogs.DIALOG_ID_LIVE_DEVELOPMENT_URL_MAP,
+            "The title",
+            "The message",
+            true
+        ).done(function (id) {
+            if (id === Dialogs.DIALOG_BTN_OK) {
+                alert('save');
+            } else {
+                alert('cancel');
+            }
+        });
+
+    }
+
     /** Create the menu item "Go Live" */
     function _setupGoLiveButton() {
         _$btnGoLive = $("#toolbar-go-live");
@@ -174,6 +191,7 @@ define(function main(require, exports, module) {
     window.setTimeout(init);
 
     CommandManager.register(Strings.CMD_LIVE_FILE_PREVIEW,  Commands.FILE_LIVE_FILE_PREVIEW, _handleGoLiveCommand);
+    CommandManager.register(Strings.CMD_LIVE_FILE_URL_MAP,  Commands.FILE_LIVE_FILE_URL_MAP, _handleGoLiveUrlMapCommand);
 
     // Export public functions
     exports.init = init;

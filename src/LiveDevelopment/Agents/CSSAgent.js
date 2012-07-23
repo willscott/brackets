@@ -46,7 +46,7 @@ define(function CSSAgent(require, exports, module) {
             var i, header;
             for (i in res.headers) {
                 header = res.headers[i];
-                _urlToStyle[header.sourceURL] = header;
+                _urlToStyle[Inspector.reverseMapUrl(header.sourceURL)] = header;
             }
             _load.resolve();
         });

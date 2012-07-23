@@ -832,6 +832,7 @@ define(function (require, exports, module) {
         menu.addMenuItem(Commands.FILE_SAVE,                "Ctrl-S");
         menu.addMenuDivider();
         menu.addMenuItem(Commands.FILE_LIVE_FILE_PREVIEW,   "Ctrl-Alt-P");
+        menu.addMenuItem(Commands.FILE_LIVE_FILE_URL_MAP,   "Ctrl-Alt-P");
         menu.addMenuDivider();
         menu.addMenuItem(Commands.FILE_QUIT,                "Ctrl-Q");
 

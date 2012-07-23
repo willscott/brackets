@@ -313,7 +313,10 @@ define(function LiveDevelopment(require, exports, module) {
             }
             
             _setStatus(1);
-            Inspector.connectToURL(doc.root.url).fail(function onConnectFail(err) {
+
+            var mappedUrl = Inspector.mapUrl(doc.root.url);
+
+            Inspector.connectToURL(mappedUrl).fail(function onConnectFail(err) {
                 if (err === "CANCEL") {
                     return;
                 }

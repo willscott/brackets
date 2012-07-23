@@ -192,6 +192,28 @@
             <a href="#" class="dialog-button btn primary" data-button-id="ok">Relaunch Chrome</a>
         </div>
     </div>
+    <div class="live-development-url-map-dialog template modal hide">
+        <div class="modal-header">
+            <h1 class="dialog-title">Title goes here</h1>
+        </div>
+        <div class="modal-body">
+            <p class="dialog-message">Message goes here</p>
+            <form action class="form-stacked">
+                <div class="clearfix">
+                    <label for='txt_liveUrl'>Live URL Prefix (e.g. http://...)</label>
+                    <div class='input'><input class='xlarge span8' id='txt_liveUrl' name='txt_liveUrl' size='30' type='text'></div>
+                </div>
+                <div class="clearfix">
+                    <label for='txt_fileUrl'>Absolute Filesystem URL Prefix (e.g. file:///...)</label>
+                    <div class='input'><input class='xlarge span8' id='txt_fileUrl' name='txt_fileUrl' size='30' type='text'></div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <a href="#" class="dialog-button btn left" data-button-id="cancel">Cancel</a>
+            <a href="#" class="dialog-button btn primary" data-button-id="ok">Save</a>
+        </div>
+    </div>
     <div class="about-dialog template modal hide">
         <div class="modal-header">
             <h1 class="dialog-title">About</h1>
