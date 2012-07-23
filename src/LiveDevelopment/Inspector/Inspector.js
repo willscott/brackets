@@ -88,8 +88,8 @@ define(function Inspector(require, exports, module) {
     var _handlers = {}; // {name -> function} for attached event handlers
     var _socket; // remote debugger WebSocket
     var _connectDeferred; // The deferred connect
-    var _remoteUrlPrefix = "http://10.0.2.1/~jbrandt/examples/todo";
-    var _filesystemUrlPrefix = "file:///Users/jbrandt/development/jdiehl-internship/Prototypes/Examples/todo";
+    var _remoteUrlPrefix = "";
+    var _filesystemUrlPrefix = "";
 
     /** Trigger an event handler
      * @param {function} event handler

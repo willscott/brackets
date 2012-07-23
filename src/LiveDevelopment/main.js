@@ -125,16 +125,16 @@ define(function main(require, exports, module) {
         $("#txt_liveUrl", $dlg).val(map.remote);
         $("#txt_fileUrl", $dlg).val(map.filesystem);
 
-        var saveHandler = function() {
+        var saveHandler = function () {
             var remote = $("#txt_liveUrl", $dlg).val();
             var filesystem = $("#txt_fileUrl", $dlg).val();
             Inspector.setUrlMap(remote, filesystem);
 
             $("a.btn.primary", $dlg).unbind("click", saveHandler);
             $dlg.modal(true).hide();
-        }
+        };
 
-        $("a.btn.primary", $dlg).bind("click", saveHandler)
+        $("a.btn.primary", $dlg).bind("click", saveHandler);
 
         $dlg.modal({
             backdrop: "static",
