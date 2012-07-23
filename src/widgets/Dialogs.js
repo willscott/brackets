@@ -45,7 +45,6 @@ define(function (require, exports, module) {
         DIALOG_ID_EXT_CHANGED = "ext-changed-dialog",
         DIALOG_ID_EXT_DELETED = "ext-deleted-dialog",
         DIALOG_ID_LIVE_DEVELOPMENT = "live-development-error-dialog",
-        DIALOG_ID_LIVE_DEVELOPMENT_URL_MAP = "live-development-url-map-dialog",
         DIALOG_ID_ABOUT = "about-dialog";
 
     function _dismissDialog(dlg, buttonId) {
@@ -117,7 +116,7 @@ define(function (require, exports, module) {
      * @return {$.Promise} a promise that will be resolved with the ID of the clicked button when the dialog
      *     is dismissed. Never rejected.
      */
-    function showModalDialog(dlgClass, title, message, hasForm) {
+    function showModalDialog(dlgClass, title, message) {
         var result = $.Deferred(),
             promise = result.promise();
         
@@ -154,13 +153,7 @@ define(function (require, exports, module) {
             if (!buttonId) {    // buttonId will be undefined if closed via Bootstrap's "x" button
                 buttonId = DIALOG_BTN_CANCEL;
             }
-
-            $dlg.data.form = {};
-            var $inputs = $("input", $dlg);
-            $inputs.toArray().forEach(function(e) {
-                $dlg.data.form[e.id] = e.value;
-            })
-
+            
             // Let call stack return before notifying that dialog has closed; this avoids issue #191
             // if the handler we're triggering might show another dialog (as long as there's no
             // fade-out animation)
@@ -172,9 +165,7 @@ define(function (require, exports, module) {
             $dlg.remove();
 
             // Remove keydown event handler
-            if (!hasForm) {
-                window.document.body.removeEventListener("keydown", handleKeyDown, true);
-            }
+            window.document.body.removeEventListener("keydown", handleKeyDown, true);
             KeyBindingManager.setEnabled(true);
         }).one("shown", function () {
             // Set focus to the default button
@@ -185,9 +176,7 @@ define(function (require, exports, module) {
             }
 
             // Listen for dialog keyboard shortcuts
-            if (!hasForm) {
-                window.document.body.addEventListener("keydown", handleKeyDown, true);
-            }
+            window.document.body.addEventListener("keydown", handleKeyDown, true);
             KeyBindingManager.setEnabled(false);
         });
         
@@ -228,7 +217,6 @@ define(function (require, exports, module) {
     exports.DIALOG_ID_EXT_CHANGED = DIALOG_ID_EXT_CHANGED;
     exports.DIALOG_ID_EXT_DELETED = DIALOG_ID_EXT_DELETED;
     exports.DIALOG_ID_LIVE_DEVELOPMENT = DIALOG_ID_LIVE_DEVELOPMENT;
-    exports.DIALOG_ID_LIVE_DEVELOPMENT_URL_MAP = DIALOG_ID_LIVE_DEVELOPMENT_URL_MAP;
     exports.DIALOG_ID_ABOUT = DIALOG_ID_ABOUT;
     
     exports.showModalDialog = showModalDialog;

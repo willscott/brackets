@@ -43,7 +43,6 @@ define(function main(require, exports, module) {
         LiveDevelopment = require("LiveDevelopment/LiveDevelopment"),
         Inspector       = require("LiveDevelopment/Inspector/Inspector"),
         CommandManager  = require("command/CommandManager"),
-        Dialogs         = require("widgets/Dialogs"),
         Strings         = require("strings");
 
     var config = {
@@ -119,19 +118,28 @@ define(function main(require, exports, module) {
     }
 
     function _handleGoLiveUrlMapCommand() {
-        Dialogs.showModalDialog(
-            Dialogs.DIALOG_ID_LIVE_DEVELOPMENT_URL_MAP,
-            "The title",
-            "The message",
-            true
-        ).done(function (id) {
-            if (id === Dialogs.DIALOG_BTN_OK) {
-                alert('save');
-            } else {
-                alert('cancel');
-            }
-        });
+        var $dlg = $('#live-development-url-map-dialog');
+        var map = Inspector.getUrlMap();
 
+
+        $("#txt_liveUrl", $dlg).val(map.remote);
+        $("#txt_fileUrl", $dlg).val(map.filesystem);
+
+        var saveHandler = function() {
+            var remote = $("#txt_liveUrl", $dlg).val();
+            var filesystem = $("#txt_fileUrl", $dlg).val();
+            Inspector.setUrlMap(remote, filesystem);
+
+            $("a.btn.primary", $dlg).unbind("click", saveHandler);
+            $dlg.modal(true).hide();
+        }
+
+        $("a.btn.primary", $dlg).bind("click", saveHandler)
+
+        $dlg.modal({
+            backdrop: "static",
+            show: true
+        });
     }
 
     /** Create the menu item "Go Live" */

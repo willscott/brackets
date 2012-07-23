@@ -88,6 +88,8 @@ define(function Inspector(require, exports, module) {
     var _handlers = {}; // {name -> function} for attached event handlers
     var _socket; // remote debugger WebSocket
     var _connectDeferred; // The deferred connect
+    var _remoteUrlPrefix = "http://10.0.2.1/~jbrandt/examples/todo";
+    var _filesystemUrlPrefix = "file:///Users/jbrandt/development/jdiehl-internship/Prototypes/Examples/todo";
 
     /** Trigger an event handler
      * @param {function} event handler
@@ -343,12 +345,21 @@ define(function Inspector(require, exports, module) {
         request.send(null);
     }
 
+    function setUrlMap(remote, filesystem) {
+        _remoteUrlPrefix = remote;
+        _filesystemUrlPrefix = filesystem;
+    }
+
+    function getUrlMap() {
+        return {remote: _remoteUrlPrefix, filesystem: _filesystemUrlPrefix};
+    }
+
     function mapUrl(url) {
-        return url.replace('file:///Users/jbrandt/development/jdiehl-internship/Prototypes/Examples/todo', 'http://192.168.1.104/~jbrandt/examples/todo');
+        return url.replace(_filesystemUrlPrefix, _remoteUrlPrefix);
     }
 
     function reverseMapUrl(url) {
-        return url.replace('http://192.168.1.104/~jbrandt/examples/todo', 'file:///Users/jbrandt/development/jdiehl-internship/Prototypes/Examples/todo');
+        return url.replace(_remoteUrlPrefix, _filesystemUrlPrefix);
     }
 
     // Export public functions
@@ -361,6 +372,8 @@ define(function Inspector(require, exports, module) {
     exports.connectToURL = connectToURL;
     exports.connected = connected;
     exports.init = init;
+    exports.setUrlMap = setUrlMap;
+    exports.getUrlMap = getUrlMap;
     exports.mapUrl = mapUrl;
     exports.reverseMapUrl = reverseMapUrl;
 });
