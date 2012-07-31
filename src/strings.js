@@ -153,6 +153,7 @@ define(function (require, exports, module) {
     exports.CMD_SHOW_PERF_DATA                  = "Show Performance Data";
     exports.CMD_NEW_BRACKETS_WINDOW             = "New Brackets Window";
     exports.CMD_USE_TAB_CHARS                   = "Use Tab Characters";
+    exports.CMD_SHOW_EXT_FOLDER                 = "Show Extensions Folder";
 
     // Help menu commands
     exports.CMD_ABOUT                           = "About";
