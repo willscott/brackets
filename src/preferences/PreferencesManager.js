@@ -87,16 +87,19 @@ define(function (require, exports, module) {
      * Initialize persistent storage implementation
      */
     function _initStorage() {
-
         if (doLoadPreferences) {
 			chrome.storage.sync.get(preferencesKey, function(data) {
-	            prefStorage = JSON.parse(data);
+				try {
+					prefStorage = JSON.parse(data[preferencesKey]);
+				} catch(e) {
+					prefStorage = false;
+				}
 
 		        // initialize empty preferences if none were found in storage
 		        if (!prefStorage) {
 		            _reset();
 		        }
-			});
+			}.bind(this));
         } else if(!prefStorage) {
         	_reset();
         }
@@ -105,8 +108,7 @@ define(function (require, exports, module) {
     // Check localStorage for a preferencesKey. Production and unit test keys
     // are used to keep preferences separate within the same storage implementation.
 	chrome.storage.local.get('preferencesKey', function(key) {
-		preferencesKey = key;
-
+		preferencesKey = key['preferencesKey'];
 	    if (!preferencesKey) {
 	        // use default key if none is found
 	        preferencesKey = PREFERENCES_KEY;
@@ -114,11 +116,11 @@ define(function (require, exports, module) {
 			_initStorage();
 		} else {
 			chrome.storage.local.get('doLoadPreferences', function(load) {
-				doLoadPreferences = !!load;				
+				doLoadPreferences = !!load['doLoadPreferences'];		
 				_initStorage();
-			})
+			}.bind(this));
 		}
-	});
+	}.bind(this));
 
     // Public API
     exports.getPreferenceStorage    = getPreferenceStorage;
