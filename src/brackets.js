@@ -347,7 +347,7 @@ define(function (require, exports, module) {
             
     // Main Brackets initialization
     _initGlobalBrackets();
-
+	
 	Mustache.render(MainViewHTML, Strings, _onReady);
 	/*
     // Localize MainViewHTML and inject into <BODY> tag

@@ -11,6 +11,6 @@
   "sandbox": {
 	  "pages": ["sandbox.html"]
    },
-  "permissions": ["app.window", "experimental", "storage"],
+  "permissions": ["app.window", "experimental", "storage","fileSystem"],
   "icons": {"128": "styles/images/brackets_icon.svg"}
 }

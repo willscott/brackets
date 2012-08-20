@@ -730,6 +730,7 @@ define(function (require, exports, module) {
                     // use specified path
                     _loadProject(path).pipe(result.resolve, result.reject);
                 } else {
+					if (!_projectRoot) { _projectRoot = {fullPath:"/"}; }
                     // Pop up a folder browse dialog
                     NativeFileSystem.showOpenDialog(false, true, "Choose a folder", _projectRoot.fullPath, null,
                         function (files) {
