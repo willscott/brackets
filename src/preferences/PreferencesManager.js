@@ -39,7 +39,6 @@ define(function (require, exports, module) {
     // Private Properties
     var preferencesKey,
         prefStorage,
-        persistentStorage,
         doLoadPreferences   = false;
 
     /**
@@ -70,7 +69,7 @@ define(function (require, exports, module) {
      */
     function savePreferences() {
         // save all preferences
-        persistentStorage.setItem(preferencesKey, JSON.stringify(prefStorage));
+		chrome.storage.sync.set({preferencesKey: JSON.stringify(prefStorage)}, function() {});
     }
 
     /**
@@ -80,43 +79,46 @@ define(function (require, exports, module) {
     function _reset() {
         prefStorage = {};
 
-        // Note that storage.clear() is not used. Production and unit test code
-        // both rely on the same backing storage but unique item keys.
-        persistentStorage.setItem(preferencesKey, JSON.stringify(prefStorage));
+		chrome.storage.sync.remove(preferencesKey, function() {});
     }
 
     /**
      * @private
      * Initialize persistent storage implementation
      */
-    function _initStorage(storage) {
-        persistentStorage = storage;
+    function _initStorage() {
 
         if (doLoadPreferences) {
-            prefStorage = JSON.parse(persistentStorage.getItem(preferencesKey));
-        }
+			chrome.storage.sync.get(preferencesKey, function(data) {
+	            prefStorage = JSON.parse(data);
 
-        // initialize empty preferences if none were found in storage
-        if (!prefStorage) {
-            _reset();
+		        // initialize empty preferences if none were found in storage
+		        if (!prefStorage) {
+		            _reset();
+		        }
+			});
+        } else if(!prefStorage) {
+        	_reset();
         }
     }
 
     // Check localStorage for a preferencesKey. Production and unit test keys
     // are used to keep preferences separate within the same storage implementation.
-    preferencesKey = localStorage.getItem("preferencesKey");
+	chrome.storage.local.get('preferencesKey', function(key) {
+		preferencesKey = key;
 
-    if (!preferencesKey) {
-        // use default key if none is found
-        preferencesKey = PREFERENCES_KEY;
-        doLoadPreferences = true;
-    } else {
-        // using a non-default key, check for additional settings
-        doLoadPreferences = !!(localStorage.getItem("doLoadPreferences"));
-    }
-
-    // Use localStorage by default
-    _initStorage(localStorage);
+	    if (!preferencesKey) {
+	        // use default key if none is found
+	        preferencesKey = PREFERENCES_KEY;
+	        doLoadPreferences = true;
+			_initStorage();
+		} else {
+			chrome.storage.local.get('doLoadPreferences', function(load) {
+				doLoadPreferences = !!load;				
+				_initStorage();
+			})
+		}
+	});
 
     // Public API
     exports.getPreferenceStorage    = getPreferenceStorage;

@@ -8,6 +8,6 @@
       "scripts": ["chrome.js"]
     }
   },
-  "permissions": ["app.window", "experimental"],
+  "permissions": ["app.window", "experimental", "storage"],
   "icons": {"128": "styles/images/brackets_icon.svg"}
 }

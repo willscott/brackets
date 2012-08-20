@@ -3233,7 +3233,6 @@ function loadStyleSheet(sheet, callback, reload, remaining) {
         }
     }
     var filename = href.match(/([^\/]+)$/)[1];
-	console.log(href);
 
     xhr(sheet.href, sheet.type, function (data, lastModified) {
         if (!reload && styles && lastModified &&
