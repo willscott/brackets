@@ -348,6 +348,8 @@ define(function (require, exports, module) {
     // Main Brackets initialization
     _initGlobalBrackets();
 
+	Mustache.render(MainViewHTML, Strings, _onReady);
+	/*
     // Localize MainViewHTML and inject into <BODY> tag
     $('body').html(Mustache.render(MainViewHTML, Strings));
     // modules that depend on the HTML DOM should listen to
@@ -355,5 +357,5 @@ define(function (require, exports, module) {
     $(brackets).trigger("htmlContentLoadComplete");
 
     $(window.document).ready(_onReady);
-    
+    */
 });

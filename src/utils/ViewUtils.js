@@ -46,7 +46,7 @@ define(function (require, exports, module) {
     function _updateScrollerShadow($displayElement, $scrollElement, $shadowTop, $shadowBottom, isPositionFixed) {
         var offsetTop           = 0,
             scrollElement       = $scrollElement.get(0),
-            scrollTop           = scrollElement.scrollTop,
+            scrollTop           = $scrollElement.scrollTop,
             topShadowOffset     = Math.min(scrollTop - SCROLL_SHADOW_HEIGHT, 0),
             displayElementWidth = $displayElement.width();
         
