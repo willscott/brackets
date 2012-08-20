@@ -34,7 +34,8 @@ require.config({
     // NOTE: When we change to navigator.language here, we also should change to
     // navigator.language in ExtensionLoader (when making require contexts for each
     // extension).
-    locale: window.localStorage.getItem("locale") || brackets.app.language
+	// TODO(willscott): use chrome.storage?
+    locale: brackets.app.language
 });
 
 /**
@@ -149,7 +150,8 @@ define(function (require, exports, module) {
         //
         // Taken from:
         //   http://stackoverflow.com/questions/3277182/how-to-get-the-global-object-in-javascript
-        var Fn = Function, global = (new Fn("return this"))();
+		// TODO(willscott): handle chrome-extension inability to make Function from strings.
+        var Fn = Function, global = window;
         if (!global.brackets) {
             global.brackets = {};
         }

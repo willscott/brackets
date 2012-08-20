@@ -8,6 +8,9 @@
       "scripts": ["chrome.js"]
     }
   },
+  "sandbox": {
+	  "pages": ["sandbox.html"]
+   },
   "permissions": ["app.window", "experimental", "storage"],
   "icons": {"128": "styles/images/brackets_icon.svg"}
 }

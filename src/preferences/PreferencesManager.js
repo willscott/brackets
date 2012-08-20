@@ -37,9 +37,9 @@ define(function (require, exports, module) {
     var PREFERENCES_KEY = "com.adobe.brackets.preferences";
 
     // Private Properties
-    var preferencesKey,
-        prefStorage,
-        doLoadPreferences   = false;
+    this.preferencesKey = false;
+    this.prefStorage = false;
+    this.doLoadPreferences   = false;
 
     /**
      * Retreive preferences data for the given clientID.
@@ -53,12 +53,12 @@ define(function (require, exports, module) {
             throw new Error("Invalid clientID");
         }
 
-        var prefs = prefStorage[clientID];
+        var prefs = this.prefStorage[clientID];
 
         if (prefs === undefined) {
             // create a new empty preferences object
             prefs = (defaults && JSON.stringify(defaults)) ? defaults : {};
-            prefStorage[clientID] = prefs;
+            this.prefStorage[clientID] = prefs;
         }
 
         return new PreferenceStorage(clientID, prefs);
@@ -69,7 +69,8 @@ define(function (require, exports, module) {
      */
     function savePreferences() {
         // save all preferences
-		chrome.storage.sync.set({preferencesKey: JSON.stringify(prefStorage)}, function() {});
+		var key = this.preferencesKey || PREFERENCES_KEY;
+		chrome.storage.sync.set({key: JSON.stringify(this.prefStorage)}, function() {});
     }
 
     /**
@@ -77,55 +78,56 @@ define(function (require, exports, module) {
      * Reset preferences and callbacks
      */
     function _reset() {
-        prefStorage = {};
+        this.prefStorage = {};
 
-		chrome.storage.sync.remove(preferencesKey, function() {});
+		chrome.storage.sync.remove(this.preferencesKey, function() {});
     }
 
     /**
      * @private
      * Initialize persistent storage implementation
      */
-    function _initStorage() {
-        if (doLoadPreferences) {
-			chrome.storage.sync.get(preferencesKey, function(data) {
+    this._initStorage = function() {
+        if (this.doLoadPreferences) {
+			chrome.storage.sync.get(this.preferencesKey, function(data) {
 				try {
-					prefStorage = JSON.parse(data[preferencesKey]);
+					this.prefStorage = JSON.parse(data[this.preferencesKey]);
 				} catch(e) {
-					prefStorage = false;
+					this.prefStorage = false;
 				}
 
 		        // initialize empty preferences if none were found in storage
-		        if (!prefStorage) {
-		            _reset();
+		        if (!this.prefStorage) {
+		            this._reset();
 		        }
 			}.bind(this));
-        } else if(!prefStorage) {
-        	_reset();
+        } else if(!this.prefStorage) {
+        	this._reset();
         }
     }
 
     // Check localStorage for a preferencesKey. Production and unit test keys
     // are used to keep preferences separate within the same storage implementation.
+	var that = this;
 	chrome.storage.local.get('preferencesKey', function(key) {
-		preferencesKey = key['preferencesKey'];
-	    if (!preferencesKey) {
+		that.preferencesKey = key['preferencesKey'];
+	    if (!that.preferencesKey) {
 	        // use default key if none is found
-	        preferencesKey = PREFERENCES_KEY;
-	        doLoadPreferences = true;
-			_initStorage();
+	        that.preferencesKey = PREFERENCES_KEY;
+	        that.doLoadPreferences = true;
+			that._initStorage();
 		} else {
 			chrome.storage.local.get('doLoadPreferences', function(load) {
-				doLoadPreferences = !!load['doLoadPreferences'];		
-				_initStorage();
-			}.bind(this));
+				that.doLoadPreferences = !!load['doLoadPreferences'];		
+				that._initStorage();
+			});
 		}
 	}.bind(this));
 
     // Public API
-    exports.getPreferenceStorage    = getPreferenceStorage;
-    exports.savePreferences         = savePreferences;
+    exports.getPreferenceStorage    = getPreferenceStorage.bind(this);
+    exports.savePreferences         = savePreferences.bind(this);
 
     // Unit test use only
-    exports._reset                  = _reset;
+    exports._reset                  = _reset.bind(this);
 });
