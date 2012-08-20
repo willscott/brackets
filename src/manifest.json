@@ -1,0 +1,13 @@
+{
+  "manifest_version": 2,
+  "name": "Brackets",
+  "description": "Brackets",
+  "version": "0.0.1",
+  "app": {
+    "background": {
+      "scripts": ["chrome.js"]
+    }
+  },
+  "permissions": ["app.window", "experimental"],
+  "icons": {"128": "styles/images/brackets_icon.svg"}
+}
