@@ -23,7 +23,7 @@
 
 
 /*jslint vars: true, plusplus: true, devel: true, nomen: true, indent: 4, maxerr: 50 */
-/*global define, $, window */
+/*global define, $, window, brackets */
 
 define(function (require, exports, module) {
     "use strict";
@@ -35,6 +35,11 @@ define(function (require, exports, module) {
         EditorManager   = require("editor/EditorManager"),
         PopUpManager    = require("widgets/PopUpManager"),
         ViewUtils       = require("utils/ViewUtils");
+
+
+    var hintList,  // initialized by htmlContentLoadComplete handler
+        shouldShowHintsOnKeyUp = false;
+
 
     /**
      * @constructor
@@ -171,8 +176,9 @@ define(function (require, exports, module) {
         var keyCode = event.keyCode;
         
         // Up arrow, down arrow and enter key are always handled here
-        if (keyCode === 38 || keyCode === 40 || keyCode === 13 ||
-                (keyCode >= 33 && keyCode <= 36)) {
+        if (event.type !== "keypress" &&
+                (keyCode === 38 || keyCode === 40 || keyCode === 13 ||
+                keyCode === 33 || keyCode === 34)) {
 
             if (event.type === "keydown") {
                 if (keyCode === 38) {
@@ -187,12 +193,6 @@ define(function (require, exports, module) {
                 } else if (keyCode === 34) {
                     // Page Down
                     this.setSelectedIndex(this.selectedIndex + this.getItemsPerPage());
-                } else if (keyCode === 35) {
-                    // End
-                    this.setSelectedIndex(this.options.maxResults);
-                } else if (keyCode === 36) {
-                    // Home
-                    this.setSelectedIndex(0);
                 } else {
                     // Enter/return key
                     // Trigger a click handler to commmit the selected item
@@ -339,10 +339,6 @@ define(function (require, exports, module) {
         return itemsPerPage;
     };
 
-    // HintList is a singleton for now. Todo: Figure out broader strategy for hint list across editors
-    // and different types of hint list when other types of hinting is added.
-    var hintList = new CodeHintList(),
-        shouldShowHintsOnKeyUp = false;
         
      /**
       * Show the code hint list near the current cursor position for the specified editor
@@ -421,6 +417,13 @@ define(function (require, exports, module) {
     function _getCodeHintList() {
         return hintList;
     }
+
+    // Initialize variables and listeners that depend on the HTML DOM
+    $(brackets).on("htmlContentLoadComplete", function () {
+        // HintList is a singleton for now. Todo: Figure out broader strategy for hint list across editors
+        // and different types of hint list when other types of hinting is added.
+        hintList = new CodeHintList();
+    });
     
     // Define public API
     exports.handleKeyEvent          = handleKeyEvent;

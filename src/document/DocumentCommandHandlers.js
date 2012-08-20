@@ -319,7 +319,7 @@ define(function (require, exports, module) {
         
         // Create the new node. The createNewItem function does all the heavy work
         // of validating file name, creating the new file and selecting.
-        var deferred = _getUntitledFileSuggestion(baseDir, "Untitled", ".js");
+        var deferred = _getUntitledFileSuggestion(baseDir, Strings.Untitled, ".js");
         var createWithSuggestedName = function (suggestedName) {
             ProjectManager.createNewItem(baseDir, suggestedName, false)
                 .pipe(deferred.resolve, deferred.reject, deferred.notify)
@@ -730,7 +730,7 @@ define(function (require, exports, module) {
     /** Does a full reload of the browser window */
     function handleFileReload(commandData) {
         return _handleWindowGoingAway(commandData, function () {
-            window.location.reload();
+            window.location.reload(true);
         });
     }
     
