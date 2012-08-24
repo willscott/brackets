@@ -39,7 +39,7 @@ define(function (require, exports, module) {
 
     var hintProviders = [],
         hintList,
-        shouldShowHintsOnKeyUp = false;
+        shouldShowHintsOnChange = false;
 
 
     /**
@@ -361,7 +361,7 @@ define(function (require, exports, module) {
     }
     
     /**
-     * Handles keys related to displaying, searching, and navigating the hint list
+     * Hashndles keys related to displaying, searching, and navigating the hint list
      * @param {Editor} editor
      * @param {KeyboardEvent} event
      */
@@ -381,18 +381,23 @@ define(function (require, exports, module) {
                 }
             });
             
-            shouldShowHintsOnKeyUp = !!provider;
-        } else if (event.type === "keyup") {
-            if (shouldShowHintsOnKeyUp) {
-                shouldShowHintsOnKeyUp = false;
-                showHint(editor);
-            }
+            shouldShowHintsOnChange = !!provider;
         }
 
         // Pass to the hint list, if it's open
         if (hintList && hintList.isOpen()) {
-            shouldShowHintsOnKeyUp = false;
+            shouldShowHintsOnChange = false;
             hintList.handleKeyEvent(editor, event);
+        }
+    }
+    
+    /**
+     *
+     */
+    function handleChange(editor) {
+        if (shouldShowHintsOnChange) {
+            shouldShowHintsOnChange = false;
+            showHint(editor);
         }
     }
 
@@ -432,6 +437,7 @@ define(function (require, exports, module) {
     
     // Define public API
     exports.handleKeyEvent          = handleKeyEvent;
+    exports.handleChange            = handleChange;
     exports.showHint                = showHint;
     exports._getCodeHintList        = _getCodeHintList;
     exports.registerHintProvider    = registerHintProvider;
