@@ -35,7 +35,8 @@ define(function (require, exports, module) {
         PerfUtils               = require("utils/PerfUtils"),
         NativeApp               = require("utils/NativeApp"),
         NativeFileSystem        = require("file/NativeFileSystem").NativeFileSystem,
-        FileUtils               = require("file/FileUtils");
+        FileUtils               = require("file/FileUtils"),
+        UpdateNotification      = require("utils/UpdateNotification");
     
     function handleShowDeveloperTools(commandData) {
         brackets.app.showDeveloperTools();
@@ -53,7 +54,7 @@ define(function (require, exports, module) {
     function _handleRunUnitTests() {
         if (_testWindow) {
             try {
-                _testWindow.location.reload();
+                _testWindow.location.reload(true);
             } catch (e) {
                 _testWindow = null;  // the window was probably closed
             }
@@ -61,7 +62,7 @@ define(function (require, exports, module) {
 
         if (!_testWindow) {
             _testWindow = window.open("../test/SpecRunner.html", "brackets-test", "width=" + $(window).width() + ",height=" + $(window).height());
-            _testWindow.location.reload(); // if it was opened before, we need to reload because it will be cached
+            _testWindow.location.reload(true); // if it was opened before, we need to reload because it will be cached
         }
     }
     
@@ -234,16 +235,57 @@ define(function (require, exports, module) {
         });
     }
     
+    function _handleShowExtensionsFolder() {
+        brackets.app.showExtensionsFolder(
+            FileUtils.convertToNativePath(window.location.href),
+            function (err) {
+                // Ignore errors
+            }
+        );
+    }
+    
+    function _handleCheckForUpdates() {
+        UpdateNotification.checkForUpdate(true);
+    }
+    
+    function _enableRunTestsMenuItem() {
+        // Check for the SpecRunner.html file
+        var fileEntry = new NativeFileSystem.FileEntry(
+            FileUtils.getNativeBracketsDirectoryPath() + "/../test/SpecRunner.html"
+        );
+        
+        fileEntry.getMetadata(
+            function (metadata) {
+                // If we sucessfully got the metadata for the SpecRunner.html file, 
+                // enable the menu item
+                CommandManager.get(Commands.DEBUG_RUN_UNIT_TESTS).setEnabled(true);
+            },
+            function (error) {
+                // Error getting metadata. 
+                // The menu item is already disabled, so there is nothing to do here.
+            }
+        );
+    }
+    
     /* Register all the command handlers */
     
     // Show Developer Tools (optionally enabled)
     CommandManager.register(Strings.CMD_SHOW_DEV_TOOLS,      Commands.DEBUG_SHOW_DEVELOPER_TOOLS,   handleShowDeveloperTools)
         .setEnabled(!!brackets.app.showDeveloperTools);
     CommandManager.register(Strings.CMD_NEW_BRACKETS_WINDOW, Commands.DEBUG_NEW_BRACKETS_WINDOW,    _handleNewBracketsWindow);
-    CommandManager.register(Strings.CMD_RUN_UNIT_TESTS,      Commands.DEBUG_RUN_UNIT_TESTS,         _handleRunUnitTests);
+    CommandManager.register(Strings.CMD_SHOW_EXTENSIONS_FOLDER, Commands.DEBUG_SHOW_EXT_FOLDER,     _handleShowExtensionsFolder);
+    
+    // Start with the "Run Tests" item disabled. It will be enabled later if the test file can be found.
+    CommandManager.register(Strings.CMD_RUN_UNIT_TESTS,      Commands.DEBUG_RUN_UNIT_TESTS,         _handleRunUnitTests)
+        .setEnabled(false);
+    
     CommandManager.register(Strings.CMD_SHOW_PERF_DATA,      Commands.DEBUG_SHOW_PERF_DATA,         _handleShowPerfData);
     CommandManager.register(Strings.CMD_SWITCH_LANGUAGE,     Commands.DEBUG_SWITCH_LANGUAGE,        _handleSwitchLanguage);
     
     CommandManager.register(Strings.CMD_USE_TAB_CHARS,       Commands.TOGGLE_USE_TAB_CHARS,         _handleUseTabChars)
         .setChecked(Editor.getUseTabChar());
+    
+    CommandManager.register(Strings.CMD_CHECK_FOR_UPDATE,    Commands.CHECK_FOR_UPDATE,             _handleCheckForUpdates);
+    
+    _enableRunTestsMenuItem();
 });

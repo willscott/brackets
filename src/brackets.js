@@ -47,10 +47,6 @@ require.config({
  *
  * Unlike other modules, this one can be accessed without an explicit require() because it exposes
  * a global object, window.brackets.
- *
- * Events:
- *      htmlContentLoadComplete - sent when the HTML DOM is fully loaded. Modules should not touch
- *      or modify DOM elements before this event is sent.
  */
 define(function (require, exports, module) {
     "use strict";
@@ -65,7 +61,9 @@ define(function (require, exports, module) {
     require("LiveDevelopment/main");
     
     // Load dependent modules
-    var ProjectManager          = require("project/ProjectManager"),
+    var Global                  = require("utils/Global"),
+        LoadEvents              = require("utils/LoadEvents"),
+        ProjectManager          = require("project/ProjectManager"),
         DocumentManager         = require("document/DocumentManager"),
         EditorManager           = require("editor/EditorManager"),
         CSSInlineEditor         = require("editor/CSSInlineEditor"),
@@ -91,12 +89,11 @@ define(function (require, exports, module) {
         ExtensionLoader         = require("utils/ExtensionLoader"),
         SidebarView             = require("project/SidebarView"),
         Async                   = require("utils/Async"),
+        UpdateNotification      = require("utils/UpdateNotification"),
         UrlParams               = require("utils/UrlParams").UrlParams;
 
     // Local variables
-    var bracketsReady           = false,
-        bracketsReadyHandlers   = [],
-        params                  = new UrlParams();
+    var params                  = new UrlParams();
     
     // read URL params
     params.parse();
@@ -192,7 +189,7 @@ define(function (require, exports, module) {
     }
     
     // TODO: (issue 1029) Add timeout to main extension loading promise, so that we always call this function
-    // Making this fix will fix a warning (search for issue 1029) related to the brackets 'ready' event.
+    // Making this fix will fix a warning (search for issue 1029) related to the global brackets 'ready' event.
     function _initExtensions() {
         // allow unit tests to override which plugin folder(s) to load
         var paths = params.get("extensions") || "default,user";
@@ -234,10 +231,11 @@ define(function (require, exports, module) {
             Inspector               : require("LiveDevelopment/Inspector/Inspector"),
             NativeApp               : require("utils/NativeApp"),
             ExtensionUtils          : require("utils/ExtensionUtils"),
+            UpdateNotification      : require("utils/UpdateNotification"),
             doneLoading             : false
         };
 
-        brackets.ready(function () {
+        LoadEvents.ready(function () {
             brackets.test.doneLoading = true;
         });
     }
@@ -341,8 +339,17 @@ define(function (require, exports, module) {
         var initialProjectPath = ProjectManager.getInitialProjectPath();
         ProjectManager.openProject(initialProjectPath).done(function () {
             _initTest();
-            _initExtensions().always(_onBracketsReady);
+
+            // WARNING: LoadEvents.ready won't fire if ANY extension fails to
+            // load or throws an error during init. To fix this, we need to
+            // make a change to _initExtensions (filed as issue 1029)
+            _initExtensions().always(LoadEvents._dispatchEvent(LoadEvents.READY));
         });
+        
+        // Check for updates
+        if (!params.get("skipUpdateCheck")) {
+            UpdateNotification.checkForUpdate();
+        }
     }
             
     // Main Brackets initialization
@@ -352,9 +359,7 @@ define(function (require, exports, module) {
 	/*
     // Localize MainViewHTML and inject into <BODY> tag
     $('body').html(Mustache.render(MainViewHTML, Strings));
-    // modules that depend on the HTML DOM should listen to
-    // the htmlContentLoadComplete event.
-    $(brackets).trigger("htmlContentLoadComplete");
+    LoadEvents._dispatchEvent(LoadEvents.HTML_CONTENT_LOAD_COMPLETE);
 
     $(window.document).ready(_onReady);
     */
