@@ -1,39 +1,9 @@
-var fsShim = function() {};
-fsShim.prototype.readFile = function(path, encoding, cb) {
-	var reader = new FileReader();
-	reader.onerror = function() {
-		cb(true, null);
-	};
-	reader.onload = function(e) {
-		cb(false, e.target.result);
-	};
-	reader.readAsText(path);
-};
-fsShim.prototype.showOpenDialog = function(
-	allowMultiple, chooseDirectories,
-	title,
-	initial,
-	types,
-	cb) {
-	chrome.fileSystem.chooseFile({
-		"acceptsAllTypes": true,
-		"suggestedName": title
-	},function(fe) {
-		
-	});
-};
-
-//fsShim.prototype.stat = function(path, cb) {
-//	
-//};
-
 window.brackets = { app: { language: 'en',
 _start: new Date().valueOf(),
 getElapsedMilliseconds: function() {
 	return new Date().valueOf() - window.brackets.app._start;
 }
- },
-fs: new fsShim() };
+ }};
 
 var templateSandbox = document.createElement('iframe');
 templateSandbox.src = 'sandbox.html';
