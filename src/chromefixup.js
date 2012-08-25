@@ -62,7 +62,7 @@ var Mustache = {
 window.addEventListener('message', function(data) {
 	if (data.data['do'] == 'render') {
 		$('body').html(data.data['html']);
-	    $(brackets).trigger("htmlContentLoadComplete");
+	    LoadEvents._dispatchEvent(LoadEvents.HTML_CONTENT_LOAD_COMPLETE);
 
 	    $(window.document).ready(Mustache._onReady);
 	}
