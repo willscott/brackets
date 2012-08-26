@@ -1,9 +1,11 @@
-window.brackets = { app: { language: 'en',
-_start: new Date().valueOf(),
-getElapsedMilliseconds: function() {
+if (window.brackets == undefined) window.brackets = {};
+window.brackets.app = {
+  language: 'en',
+  _start: new Date().valueOf(),
+  getElapsedMilliseconds: function() {
 	return new Date().valueOf() - window.brackets.app._start;
-}
- }};
+  }
+};
 
 var templateSandbox = document.createElement('iframe');
 templateSandbox.src = 'sandbox.html';
@@ -17,8 +19,9 @@ templateSandbox.addEventListener('load', function() {
 }, false);
 
 var Mustache = {
-	render: function(x,y, _onReady) {
+	render: function(x,y, _onReady, _le) {
 		Mustache._onReady = _onReady;
+		Mustache._le = _le;
 		if (loaded) {
 			templateSandbox.contentWindow.postMessage({'do':'render','args':[x,y]}, "*");
 		} else {
@@ -30,6 +33,7 @@ var Mustache = {
 };
 
 window.addEventListener('message', function(data) {
+	LoadEvents = Mustache._le;
 	if (data.data['do'] == 'render') {
 		$('body').html(data.data['html']);
 	    LoadEvents._dispatchEvent(LoadEvents.HTML_CONTENT_LOAD_COMPLETE);

@@ -1002,7 +1002,7 @@ define(function (require, exports, module) {
 
         // Prevent the browser context menu since Brackets creates a custom context menu
         $(window).contextmenu(function (e) {
-            e.preventDefault();
+        //    e.preventDefault();
         });
         
         /*

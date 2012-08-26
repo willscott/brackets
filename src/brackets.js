@@ -272,7 +272,7 @@ define(function (require, exports, module) {
     }
 	
 	// Note: Willscott: Remaining sections blocked until after the now async mustache rendering.       	
-	Mustache.render(MainViewHTML, Strings, _onReady);
+	Mustache.render(MainViewHTML, Strings, _onReady, LoadEvents);
 	/*
     // Localize MainViewHTML and inject into <BODY> tag
     $('body').html(Mustache.render(MainViewHTML, Strings));
