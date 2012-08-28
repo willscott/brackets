@@ -14,5 +14,5 @@
   "minimum_chrome_version": "23",
   "offline_enabled": true,
   "permissions": ["app.window", "storage","fileSystem", "unlimitedStorage", "http://dev.brackets.io/"],
-  "icons": {"128": "chromeicon.png"}
+  "icons": {"128": "brackets128.png","16": "brackets16.png"}
 }
