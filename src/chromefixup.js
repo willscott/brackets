@@ -4,6 +4,13 @@ window.brackets.app = {
   _start: new Date().valueOf(),
   getElapsedMilliseconds: function() {
 	return new Date().valueOf() - window.brackets.app._start;
+  },
+  openLiveBrowser: function(url, remoteDebugging, callback) {
+	  console.log("will try to open " + url);
+	  
+  },
+  openURLInDefaultBrowser: function(callback, url) {
+	  window.open(url);
   }
 };
 
