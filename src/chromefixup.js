@@ -40,10 +40,10 @@ var Mustache = {
 };
 
 window.addEventListener('message', function(data) {
-	LoadEvents = Mustache._le;
+	AppInit = Mustache._le;
 	if (data.data['do'] == 'render') {
 		$('body').html(data.data['html']);
-	    LoadEvents._dispatchEvent(LoadEvents.HTML_CONTENT_LOAD_COMPLETE);
+	    AppInit._dispatchReady(AppInit.HTML_READY);
 
 	    $(window.document).ready(Mustache._onReady);
 	}
